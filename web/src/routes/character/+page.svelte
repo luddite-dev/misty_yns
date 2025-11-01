@@ -2,6 +2,7 @@
 	import { onMount } from 'svelte';
 	import { fetchCharactersFullData } from '$lib/api/characters';
 	import { fetchScenes, getCharacterScenes, fetchExScenePreview } from '$lib/api/scenes';
+	import { getScenePreviewBatch } from '$lib/utils/indexedDB';
 	import type { TopLevel as Character } from '$lib/types/characters';
 	import type { CharacterScene } from '$lib/api/scenes';
 
@@ -51,15 +52,34 @@
 	async function loadPreviewsInBackground() {
 		loadingPreviews = true;
 		try {
+			// Get all scene IDs that need previews
+			const sceneIds = characterScenes.map(scene => scene.id.toString());
+			
+			// Try to load from IndexedDB cache first
+			const cachedPreviews = await getScenePreviewBatch(sceneIds);
+			
+			// Apply cached previews
 			for (const scene of characterScenes) {
-				// Skip if already loaded
-				if (previewsLoaded.has(scene.id) || scene.previewUrl) {
+				const sceneIdStr = scene.id.toString();
+				const cached = cachedPreviews.get(sceneIdStr);
+				if (cached) {
+					scene.previewUrl = cached;
+					previewsLoaded.add(sceneIdStr);
+				}
+			}
+			
+			// For any scenes without cached previews, fetch them
+			for (const scene of characterScenes) {
+				const sceneIdStr = scene.id.toString();
+				// Skip if already loaded from cache
+				if (previewsLoaded.has(sceneIdStr) || scene.previewUrl) {
 					continue;
 				}
+				
 				const preview = await fetchExScenePreview(scene.id);
 				if (preview) {
 					scene.previewUrl = preview;
-					previewsLoaded.add(scene.id);
+					previewsLoaded.add(sceneIdStr);
 				}
 			}
 		} catch (err) {
