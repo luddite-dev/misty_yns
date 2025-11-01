@@ -33,7 +33,7 @@
 		} else {
 			url.searchParams.delete('q');
 		}
-		goto(url.toString(), { noScroll: false });
+		window.history.replaceState({}, '', url.toString());
 	});
 
 	let filteredCharacters: Character[] = $derived.by(() => {
