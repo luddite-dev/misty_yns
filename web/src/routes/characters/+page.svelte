@@ -1,6 +1,5 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
-	import { page } from '$app/stores';
 	import { goto } from '$app/navigation';
 	import { fetchCharacters } from '$lib/api/characters';
 	import CharacterCard from '$lib/components/CharacterCard.svelte';
@@ -15,9 +14,9 @@
 		try {
 			loading = true;
 			characters = await fetchCharacters();
-			
+
 			// Load search query from URL param
-			const query = $page.url.searchParams.get('q') || '';
+			const query = new URLSearchParams(window.location.search).get('q') || '';
 			searchQuery = query;
 		} catch (err) {
 			error = err instanceof Error ? err.message : 'Failed to load characters';
@@ -28,21 +27,19 @@
 
 	// Update URL when search query changes
 	$effect(() => {
-		const url = new URL(window.location);
+		const url = new URL(window.location.href);
 		if (searchQuery) {
 			url.searchParams.set('q', searchQuery);
 		} else {
 			url.searchParams.delete('q');
 		}
-		goto(url.pathname + url.search, { replaceHistory: true, noScroll: true });
+		goto(url.toString(), { noScroll: true });
 	});
 
 	let filteredCharacters: Character[] = $derived.by(() => {
 		if (!searchQuery) return characters;
 
-		return characters.filter((char) =>
-			char.name.toLowerCase().includes(searchQuery.toLowerCase())
-		);
+		return characters.filter((char) => char.name.toLowerCase().includes(searchQuery.toLowerCase()));
 	});
 </script>
 
@@ -64,7 +61,7 @@
 				type="text"
 				placeholder="Search characters by name..."
 				bind:value={searchQuery}
-				class="w-full rounded-lg border border-gray-300 px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+				class="w-full rounded-lg border border-gray-300 px-4 py-2 focus:ring-2 focus:ring-blue-500 focus:outline-none"
 			/>
 		</div>
 

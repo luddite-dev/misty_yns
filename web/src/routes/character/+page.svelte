@@ -2,22 +2,13 @@
 	import { onMount } from 'svelte';
 	import { fetchCharactersFullData } from '$lib/api/characters';
 	import { fetchScenes, getCharacterScenes } from '$lib/api/scenes';
-	import { dataStore } from '$lib/stores/dataStore';
 	import type { TopLevel as Character } from '$lib/types/characters';
-	import type { TopLevel as Scene } from '$lib/types/scenes';
 	import type { CharacterScene } from '$lib/api/scenes';
 
 	let character: Character | null = $state(null);
 	let characterScenes: CharacterScene[] = $state([]);
 	let loading: boolean = $state(true);
 	let error: string | null = $state(null);
-
-	let storeData = $state({ characters: null as Character[] | null, scenes: null as Scene[] | null });
-
-	// Subscribe to store
-	const unsubscribe = dataStore.subscribe((data) => {
-		storeData = data as typeof storeData;
-	});
 
 	onMount(async () => {
 		try {
@@ -31,22 +22,14 @@
 				return;
 			}
 
-			// Fetch characters if not cached
-			let characters = storeData.characters;
-			if (!characters) {
-				characters = await fetchCharactersFullData();
-				dataStore.setCharacters(characters);
-			}
-
-			// Fetch scenes if not cached
-			let scenes = storeData.scenes;
-			if (!scenes) {
-				scenes = await fetchScenes();
-				dataStore.setScenes(scenes);
-			}
+			// Fetch all data (automatically uses cache if available)
+			const [characters, scenes] = await Promise.all([
+				fetchCharactersFullData(),
+				fetchScenes()
+			]);
 
 			// Find the character
-			character = characters?.find((c) => c.Id === characterId) || null;
+			character = characters.find((c) => c.Id === characterId) || null;
 
 			if (!character) {
 				error = 'Character not found';
@@ -55,16 +38,12 @@
 			}
 
 			// Get scenes for this character
-			if (scenes) {
-				characterScenes = getCharacterScenes(character, scenes);
-			}
+			characterScenes = getCharacterScenes(character, scenes);
 		} catch (err) {
 			error = err instanceof Error ? err.message : 'Failed to load character';
 		} finally {
 			loading = false;
 		}
-
-		return unsubscribe;
 	});
 </script>
 

@@ -118,33 +118,8 @@ async function clearAllCache(): Promise<void> {
 }
 
 function createCachedStore() {
-	// Initialize store
+	// Create store without any initialization logic
 	const { subscribe, set, update } = writable<CacheData>({ characters: null, scenes: null });
-
-	// Load from cache on initialization
-	(async () => {
-		try {
-			const charactersValid = await isCacheValid('characters_metadata');
-			const scenesValid = await isCacheValid('scenes_metadata');
-
-			let characters: Character[] | null = null;
-			let scenes: Scene[] | null = null;
-
-			if (charactersValid) {
-				const cached = await getFromDB(CHARACTERS_STORE, 'characters');
-				characters = cached?.data || null;
-			}
-
-			if (scenesValid) {
-				const cached = await getFromDB(SCENES_STORE, 'scenes');
-				scenes = cached?.data || null;
-			}
-
-			set({ characters, scenes });
-		} catch (error) {
-			console.error('Failed to load cache on init:', error);
-		}
-	})();
 
 	return {
 		subscribe,
@@ -169,3 +144,4 @@ export const dataStore = createCachedStore();
 export const isLoading = derived(dataStore, ($store) => {
 	return $store.characters === null || $store.scenes === null;
 });
+

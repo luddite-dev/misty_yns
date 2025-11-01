@@ -26,19 +26,33 @@ async function fetchCharactersFromAPI(): Promise<TopLevel[]> {
 	}
 }
 
+async function getCachedCharactersFullData(): Promise<TopLevel[] | null> {
+	if (cachedFullData) {
+		return cachedFullData;
+	}
+
+	try {
+		// Use a promise that resolves with the first subscriber value
+		return new Promise((resolve) => {
+			let unsubscribe: (() => void) | null = null;
+			unsubscribe = dataStore.subscribe((data) => {
+				if (unsubscribe) {
+					unsubscribe();
+				}
+				resolve(data.characters);
+			});
+		});
+	} catch {
+		return null;
+	}
+}
+
 /**
  * Fetches simplified character data (id, name, profile image).
  * Uses cache if available, otherwise fetches from API and populates cache.
  */
 export async function fetchCharacters(): Promise<Character[]> {
-	let fullData = cachedFullData;
-
-	if (!fullData) {
-		fullData = await fetchCharactersFromAPI();
-		cachedFullData = fullData;
-		await dataStore.setCharacters(fullData);
-	}
-
+	const fullData = await fetchCharactersFullData();
 	return fullData.map((char) => ({
 		id: char.Id,
 		name: char.MCharacterBase.Name || char.Name,
@@ -48,13 +62,23 @@ export async function fetchCharacters(): Promise<Character[]> {
 
 /**
  * Fetches full character data with all fields.
- * Uses cache if available, otherwise fetches from API and populates cache.
+ * Automatically checks cache (in-memory, then store) before fetching from API.
+ * Populates cache if fetched from API.
  */
 export async function fetchCharactersFullData(): Promise<TopLevel[]> {
+	// Check in-memory cache first
 	if (cachedFullData) {
 		return cachedFullData;
 	}
 
+	// Check store cache
+	const cached = await getCachedCharactersFullData();
+	if (cached && cached.length > 0) {
+		cachedFullData = cached;
+		return cached;
+	}
+
+	// Fetch from API if not cached
 	const fullData = await fetchCharactersFromAPI();
 	cachedFullData = fullData;
 	await dataStore.setCharacters(fullData);

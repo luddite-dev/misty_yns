@@ -27,15 +27,46 @@ async function fetchScenesFromAPI(): Promise<Scene[]> {
 	}
 }
 
-/**
- * Fetches all scenes and chains them together using NextMSceneId
- * to build complete scene sequences. Uses cache if available.
- */
-export async function fetchScenes(): Promise<Scene[]> {
+async function getCachedScenes(): Promise<Scene[] | null> {
 	if (cachedScenes) {
 		return cachedScenes;
 	}
 
+	try {
+		// Use store subscription to get cached scenes
+		return new Promise((resolve) => {
+			let unsubscribe: (() => void) | null = null;
+			unsubscribe = dataStore.subscribe((data) => {
+				if (unsubscribe) {
+					unsubscribe();
+				}
+				resolve(data.scenes);
+			});
+		});
+	} catch {
+		return null;
+	}
+}
+
+/**
+ * Fetches all scenes and chains them together using NextMSceneId.
+ * Automatically checks cache before fetching from API.
+ * Populates cache if fetched from API.
+ */
+export async function fetchScenes(): Promise<Scene[]> {
+	// Check in-memory cache first
+	if (cachedScenes) {
+		return cachedScenes;
+	}
+
+	// Check store cache
+	const cached = await getCachedScenes();
+	if (cached && cached.length > 0) {
+		cachedScenes = cached;
+		return cached;
+	}
+
+	// Fetch from API if not cached
 	const scenes = await fetchScenesFromAPI();
 	cachedScenes = scenes;
 	await dataStore.setScenes(scenes);
