@@ -147,7 +147,7 @@
 						{#each characterScenes as scene (scene.id)}
 							<a
 								href={`/ex-scene?frameId=${encodeURIComponent(scene.id)}`}
-								class="overflow-hidden rounded-lg border border-gray-200 bg-white shadow-sm transition-all hover:shadow-md hover:border-blue-300"
+								class="overflow-hidden rounded-lg border border-gray-200 bg-white shadow-sm transition-all hover:border-blue-300 hover:shadow-md"
 							>
 								<!-- Preview Image -->
 								{#if scene.previewUrl === undefined && loadingPreviews}
@@ -159,12 +159,11 @@
 									</div>
 								{:else if scene.previewUrl}
 									<!-- Loaded preview -->
-									<div class="relative flex flex-grow items-center justify-center bg-gray-100">
+									<div class="relative flex items-center justify-center bg-gray-100">
 										<img
 											src={scene.previewUrl}
 											alt={scene.title}
 											class="h-full w-full object-contain"
-											onerror={(e) => (e.target!.style.display = 'none')}
 										/>
 									</div>
 								{:else}

@@ -23,17 +23,17 @@
 		} finally {
 			loading = false;
 		}
+	});
 
-		// Update URL when search query changes
-		$effect(() => {
-			const url = new URL(window.location.href);
-			if (searchQuery) {
-				url.searchParams.set('q', searchQuery);
-			} else {
-				url.searchParams.delete('q');
-			}
-			goto(url.toString(), { noScroll: true });
-		});
+	// Update URL when search query changes
+	$effect(() => {
+		const url = new URL(window.location.href);
+		if (searchQuery) {
+			url.searchParams.set('q', searchQuery);
+		} else {
+			url.searchParams.delete('q');
+		}
+		goto(url.toString(), { noScroll: false });
 	});
 
 	let filteredCharacters: Character[] = $derived.by(() => {
