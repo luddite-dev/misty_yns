@@ -35,7 +35,7 @@ export default class Classify {
             let parsedDataArray = [];
             for (let i = 0; i < files.length; i++) {
                 let data = files[i][1];
-                let str = await (data.async != null ? data.async('text') : readFileAsync(data, 'text')).then(d => d.replace(/^data:application\/(octet-stream|json)\;base64\,/gm, ''));
+                let str = await (data.async != null ? data.async('text') : readFileAsync(data, 'text')).then(d => d.replace(/^data:(?:application|text)\/[^;]*\;base64\,/gm, ''));
                 let parsedData = new AtlasParser(str).parse();
                 parsedDataArray = parsedDataArray.concat(parsedData);
             }
@@ -61,7 +61,7 @@ export default class Classify {
             if (isSkelOrAtlas) {
                 ischr = true;
                 colectObj[name] ??= new spineModel(name, isFromZip ? files : null);
-                let b64Data = await (isFromZip ? data.async('base64') : readFileAsync(data, 'base64')).then(d => d.replace(/^data:application\/(octet-stream|json)\;base64\,/gm, ''));
+                let b64Data = await (isFromZip ? data.async('base64') : readFileAsync(data, 'base64')).then(d => d.replace(/^data:(?:application|text)\/[^;]*\;base64\,/gm, ''));
 
                 const versionReg = /\d\.\d\.\d{1,2}/g;
                 if (isSkel) {

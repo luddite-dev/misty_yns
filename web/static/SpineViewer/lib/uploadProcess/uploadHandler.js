@@ -10,11 +10,6 @@ export default async function uploadHandler(form) {
     console.log('[uploadHandler] autoLoadedData:', autoLoadedData);
     
     if (autoLoadedData && autoLoadedData.files && autoLoadedData.files.length > 0) {
-        const dataTransfer = new DataTransfer();
-        autoLoadedData.files.forEach(file => dataTransfer.items.add(file));
-        form.querySelector('input[type="file"]').files = dataTransfer.files;
-        form.classList.add('hide');
-        document.forms[1].classList.add('hide');
         
         console.log('[uploadHandler] Processing autoLoaded files...');
         const result = await orgernize({ chrs: autoLoadedData.files, back: [] });
@@ -22,26 +17,40 @@ export default async function uploadHandler(form) {
         console.log('[uploadHandler] orgernize result:', result);
         console.log('[uploadHandler] animationSequences available:', autoLoadedData.animationSequences);
         
+        // Ensure result has chr property
+        if (!result.chr) {
+            result.chr = {};
+        }
+        if (!result.back) {
+            result.back = {};
+        }
+        
         if (autoLoadedData.animationSequences && result.chr) {
              for (let [modelKey, model] of Object.entries(result.chr)) {
-                 console.log('[uploadHandler] Processing model:', modelKey, model.name);
-                 if (autoLoadedData.animationSequences[model.name]) {
-                     console.log('[uploadHandler] Found animation sequence for', model.name, ':', autoLoadedData.animationSequences[model.name]);
-                     model.animationSequence = autoLoadedData.animationSequences[model.name];
-                 } else {
-                     console.log('[uploadHandler] No animation sequence found for', model.name);
-                 }
-             }
-         }
-         
-         if (result.chr) {
-             for (let [modelKey, model] of Object.entries(result.chr)) {
-                 model.hasAnimationConfig = autoLoadedData.hasAnimationConfig;
-             }
-         }
-        
-        console.log('[uploadHandler] Final result:', result);
-        return result;
+                   console.log('[uploadHandler] Processing model:', modelKey, model.name);
+                   if (autoLoadedData.animationSequences[model.name]) {
+                       console.log('[uploadHandler] Found animation sequence for', model.name, ':', autoLoadedData.animationSequences[model.name]);
+                       model.animationSequence = autoLoadedData.animationSequences[model.name];
+                   } else {
+                       console.log('[uploadHandler] No animation sequence found for', model.name);
+                   }
+               }
+           }
+           
+           if (result.chr) {
+               for (let [modelKey, model] of Object.entries(result.chr)) {
+                   model.hasAnimationConfig = autoLoadedData.hasAnimationConfig;
+               }
+           }
+          
+          console.log('[uploadHandler] Final result:', result);
+          return result;
+    }
+
+    // Only set up drag/drop if we have a form
+    if (!form) {
+        console.error('No form available and no auto-loaded data');
+        return null;
     }
 
     new DragHandler('input[type="file"]', '#preview', '.upload-box', {

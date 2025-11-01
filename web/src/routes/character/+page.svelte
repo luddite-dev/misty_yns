@@ -140,8 +140,9 @@
 					{/if}
 					<div class="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
 						{#each characterScenes as scene (scene.id)}
-							<div
-								class="overflow-hidden rounded-lg border border-gray-200 bg-white shadow-sm transition-all hover:shadow-md"
+							<a
+								href={`/ex-scene?frameId=${encodeURIComponent(scene.id)}`}
+								class="overflow-hidden rounded-lg border border-gray-200 bg-white shadow-sm transition-all hover:shadow-md hover:border-blue-300"
 							>
 								<!-- Preview Image -->
 								{#if scene.previewUrl === undefined && loadingPreviews}
@@ -186,7 +187,7 @@
 										</span>
 									</div>
 								</div>
-							</div>
+							</a>
 						{/each}
 					</div>
 				</div>
