@@ -10,6 +10,7 @@
 	let loading: boolean = $state(true);
 	let error: string | null = $state(null);
 	let loadingPreviews: boolean = $state(false);
+	let previewsLoaded: Set<string> = $state(new Set());
 
 	onMount(async () => {
 		try {
@@ -51,12 +52,16 @@
 		loadingPreviews = true;
 		try {
 			for (const scene of characterScenes) {
-				if (!scene.previewUrl) {
-					scene.previewUrl = (await fetchExScenePreview(scene.id)) || undefined;
+				// Skip if already loaded
+				if (previewsLoaded.has(scene.id) || scene.previewUrl) {
+					continue;
+				}
+				const preview = await fetchExScenePreview(scene.id);
+				if (preview) {
+					scene.previewUrl = preview;
+					previewsLoaded.add(scene.id);
 				}
 			}
-			// Trigger reactivity
-			characterScenes = characterScenes;
 		} catch (err) {
 			console.error('Failed to load scene previews:', err);
 		} finally {
