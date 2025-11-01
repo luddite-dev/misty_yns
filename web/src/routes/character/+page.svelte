@@ -24,10 +24,7 @@
 			}
 
 			// Fetch all data (automatically uses cache if available)
-			const [characters, scenes] = await Promise.all([
-				fetchCharactersFullData(),
-				fetchScenes()
-			]);
+			const [characters, scenes] = await Promise.all([fetchCharactersFullData(), fetchScenes()]);
 
 			// Find the character
 			character = characters.find((c) => c.Id === characterId) || null;
@@ -143,37 +140,45 @@
 					{/if}
 					<div class="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
 						{#each characterScenes as scene (scene.id)}
-							<div class="overflow-hidden rounded-lg border border-gray-200 bg-white shadow-sm transition-all hover:shadow-md">
+							<div
+								class="overflow-hidden rounded-lg border border-gray-200 bg-white shadow-sm transition-all hover:shadow-md"
+							>
 								<!-- Preview Image -->
 								{#if scene.previewUrl === undefined && loadingPreviews}
 									<!-- Loading state -->
-									<div class="h-40 w-full bg-gray-100 flex items-center justify-center animate-pulse">
+									<div
+										class="flex h-40 w-full animate-pulse items-center justify-center bg-gray-100"
+									>
 										<div class="h-12 w-12 rounded-full bg-gray-300"></div>
 									</div>
 								{:else if scene.previewUrl}
 									<!-- Loaded preview -->
-									<div class="relative h-40 w-full bg-gray-100 flex items-center justify-center">
+									<div class="relative flex flex-grow items-center justify-center bg-gray-100">
 										<img
 											src={scene.previewUrl}
 											alt={scene.title}
-											class="max-h-full max-w-full object-contain"
-											onerror={(e) => (e.target.style.display = 'none')}
+											class="w-full h-full object-contain"
+											onerror={(e) => (e.target!.style.display = 'none')}
 										/>
 									</div>
 								{:else}
 									<!-- No preview available -->
-									<div class="h-40 w-full bg-gradient-to-br from-gray-100 to-gray-200 flex items-center justify-center">
-										<span class="text-gray-400 text-sm">No preview</span>
+									<div
+										class="flex h-40 w-full items-center justify-center bg-gradient-to-br from-gray-100 to-gray-200"
+									>
+										<span class="text-sm text-gray-400">No preview</span>
 									</div>
 								{/if}
 
-							<!-- Scene Info -->
-							<div class="p-4">
-								<h3 class="font-semibold text-gray-900 line-clamp-2">{scene.title} <span class="text-xs text-gray-600">({scene.id})</span></h3>
+								<!-- Scene Info -->
+								<div class="p-4">
+									<h3 class="line-clamp-2 font-semibold text-gray-900">
+										{scene.title} <span class="text-xs text-gray-600">({scene.id})</span>
+									</h3>
 									<div class="mt-3 flex items-center justify-between">
 										<div>
 											{#if scene.isAdult}
-												<p class="text-xs text-red-600 font-semibold">🔞 Adult Content</p>
+												<p class="text-xs font-semibold text-red-600">🔞 Adult Content</p>
 											{/if}
 										</div>
 										<span class="rounded bg-blue-100 px-2 py-1 text-xs font-semibold text-blue-800">
@@ -203,3 +208,4 @@
 		<p class="text-gray-600">Character not found</p>
 	</div>
 {/if}
+
