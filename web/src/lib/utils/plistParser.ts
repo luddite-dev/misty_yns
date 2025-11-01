@@ -104,7 +104,7 @@ export async function parsePlist(plistContent: string): Promise<PlistFrames> {
 
 		for (let keyIdx = 0; keyIdx < frameKeyArray2.length; keyIdx++) {
 			const keyName = frameKeyArray2[keyIdx];
-			
+
 			// Skip non-string values (arrays, booleans)
 			if (keyName === 'aliases') {
 				// Skip array
@@ -136,21 +136,9 @@ export async function parsePlist(plistContent: string): Promise<PlistFrames> {
 			textureRect: parseTextureRect(valueMap['textureRect'] || '{{0,0},{0,0}}'),
 			textureRotated
 		};
-		
-		// Debug log only rotated frames
-		if (textureRotated) {
-			console.log(`[PlistParser] ROTATED Frame ${frameName}:`, {
-				raw: {
-					spriteOffsetStr: valueMap['spriteOffset'],
-					spriteSizeStr: valueMap['spriteSize'],
-					spriteSourceSizeStr: valueMap['spriteSourceSize'],
-					textureRectStr: valueMap['textureRect'],
-					textureRotated
-				},
-				parsed: parsedFrame
-			});
-		}
-		
+
+
+
 		frames[frameName] = parsedFrame;
 	}
 

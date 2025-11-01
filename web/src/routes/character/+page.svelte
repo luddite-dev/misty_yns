@@ -152,11 +152,11 @@
 									</div>
 								{:else if scene.previewUrl}
 									<!-- Loaded preview -->
-									<div class="relative h-40 w-full bg-gray-100">
+									<div class="relative h-40 w-full bg-gray-100 flex items-center justify-center">
 										<img
 											src={scene.previewUrl}
 											alt={scene.title}
-											class="h-full w-full object-cover"
+											class="max-h-full max-w-full object-contain"
 											onerror={(e) => (e.target.style.display = 'none')}
 										/>
 									</div>

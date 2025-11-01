@@ -21,8 +21,8 @@ export async function extractSpriteFromAtlas(
 	const { textureRect, textureRotated, spriteOffset, spriteSize } = frame;
 
 	// When rotated, the canvas dimensions are swapped
-	const canvasWidth = textureRotated ? spriteSize.height : spriteSize.width;
-	const canvasHeight = textureRotated ? spriteSize.width : spriteSize.height;
+	const canvasWidth = spriteSize.width;
+	const canvasHeight = spriteSize.height;
 
 	// Create a canvas for the extracted sprite
 	const canvas = new OffscreenCanvas(canvasWidth, canvasHeight);
@@ -37,30 +37,26 @@ export async function extractSpriteFromAtlas(
 
 	// Apply rotation if needed
 	if (textureRotated) {
-		// Debug log only for rotated sprites
-		console.log(`[SpriteExtractor] ROTATED Sprite - extracting:`, {
-			textureRotated,
-			spriteSize,
-			textureRect,
-			spriteOffset,
-			canvasWidth,
-			canvasHeight,
-			translation: `(0, ${spriteSize.width})`,
-			rotation: `-90°`
-		});
+		// Save original dimensions
+		const originalWidth = textureRect.width;
+		const originalHeight = textureRect.height;
 		
-		// For rotated sprites: translate and rotate 90 degrees counter-clockwise
-		ctx.translate(0, spriteSize.width);
-		ctx.rotate((-Math.PI / 180) * 90);
+		// Swap dimensions for the source rectangle
+		textureRect.width = originalHeight;
+		textureRect.height = originalWidth;
+		
+		// Rotate canvas to capture the rotated sprite correctly
+		ctx.translate(canvasWidth, 0);
+		ctx.rotate((Math.PI / 180) * 90);
 	}
-
+	
 	// Draw the sprite from the atlas
 	ctx.drawImage(
 		bitmap,
 		textureRect.x, // source x in atlas
 		textureRect.y, // source y in atlas
-		textureRect.width, // source width (original texture dimensions)
-		textureRect.height, // source height (original texture dimensions)
+		textureRect.width, // source width (swapped if rotated)
+		textureRect.height, // source height (swapped if rotated)
 		spriteOffset.x, // destination x
 		spriteOffset.y, // destination y
 		textureRect.width, // destination width
