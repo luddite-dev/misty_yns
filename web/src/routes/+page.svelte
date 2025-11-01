@@ -4,6 +4,11 @@
 			name: 'Characters',
 			description: 'Browse and search Mist Train Girls characters',
 			href: '/characters'
+		},
+		{
+			name: 'EX Scenes',
+			description: 'Browse all EX scenario scenes with previews',
+			href: '/scenes'
 		}
 	];
 </script>
