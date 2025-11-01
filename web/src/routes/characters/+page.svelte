@@ -1,5 +1,7 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
+	import { page } from '$app/stores';
+	import { goto } from '$app/navigation';
 	import { fetchCharacters } from '$lib/api/characters';
 	import CharacterCard from '$lib/components/CharacterCard.svelte';
 	import type { Character } from '$lib/api/characters';
@@ -13,11 +15,26 @@
 		try {
 			loading = true;
 			characters = await fetchCharacters();
+			
+			// Load search query from URL param
+			const query = $page.url.searchParams.get('q') || '';
+			searchQuery = query;
 		} catch (err) {
 			error = err instanceof Error ? err.message : 'Failed to load characters';
 		} finally {
 			loading = false;
 		}
+	});
+
+	// Update URL when search query changes
+	$effect(() => {
+		const url = new URL(window.location);
+		if (searchQuery) {
+			url.searchParams.set('q', searchQuery);
+		} else {
+			url.searchParams.delete('q');
+		}
+		goto(url.pathname + url.search, { replaceHistory: true, noScroll: true });
 	});
 
 	let filteredCharacters: Character[] = $derived.by(() => {
