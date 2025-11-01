@@ -157,7 +157,7 @@
 										<img
 											src={scene.previewUrl}
 											alt={scene.title}
-											class="w-full h-full object-contain"
+											class="h-full w-full object-contain"
 											onerror={(e) => (e.target!.style.display = 'none')}
 										/>
 									</div>
@@ -195,12 +195,14 @@
 
 		<!-- Back Button -->
 		<div class="pt-4">
-			<a
-				href="/characters"
+			<button
+				onclick={() => {
+					history.back();
+				}}
 				class="inline-block rounded-lg border border-gray-300 bg-white px-4 py-2 transition-all hover:border-blue-500 hover:bg-blue-50"
 			>
 				← Back to Characters
-			</a>
+			</button>
 		</div>
 	</div>
 {:else}
@@ -208,4 +210,3 @@
 		<p class="text-gray-600">Character not found</p>
 	</div>
 {/if}
-
