@@ -1,15 +1,20 @@
 import type { TopLevel as Character } from '../types/characters';
 import type { TopLevel as Scene } from '../types/scenes';
 import { dataStore } from '../stores/dataStore';
+import { fetchAndParsePlist } from '../utils/plistParser';
+import { extractSpriteFromAtlas } from '../utils/spriteExtractor';
 
 const SCENES_DATA_URL =
 	'https://assets4.mist-train-girls.com/production-client-web-static/MasterData/MSceneViewModel.json';
+const EX_SCENARIO_BASE_URL =
+	'https://assets4.mist-train-girls.com/production-client-web-assets/Textures/Icons/Atlas/CharacterExScenario';
 
 export interface CharacterScene {
 	id: number;
 	title: string;
 	kizunaRank: number;
 	isAdult: boolean;
+	previewUrl?: string;
 }
 
 let cachedScenes: Scene[] | null = null;
@@ -116,4 +121,92 @@ export function getCharacterScenes(
 	}
 
 	return result;
+}
+
+/**
+ * Ex scene preview cache: {sceneId: dataUrl}
+ */
+const exScenePreviewCache = new Map<number, string>();
+
+/**
+ * Finds which atlas index contains a scene by trying each one
+ * Returns the atlas index, or -1 if not found
+ */
+async function findExSceneAtlasIndex(sceneId: number, maxAtlas: number = 10): Promise<number> {
+	for (let i = 0; i < maxAtlas; i++) {
+		try {
+			const plistUrl = `${EX_SCENARIO_BASE_URL}/characterExScenario-${i}.plist`;
+			const frames = await fetchAndParsePlist(plistUrl);
+
+			// Look for the scene in this atlas
+			const frameKey = `${sceneId}.png`;
+			if (frameKey in frames) {
+				return i;
+			}
+		} catch (error) {
+			// This atlas doesn't exist or can't be parsed, try next one
+			continue;
+		}
+	}
+
+	return -1;
+}
+
+/**
+ * Fetches the preview image for an Ex scene by:
+ * 1. Finding which atlas contains the scene
+ * 2. Parsing the plist metadata
+ * 3. Extracting the sprite from the PNG
+ */
+export async function fetchExScenePreview(sceneId: number): Promise<string | null> {
+	// Check cache first
+	if (exScenePreviewCache.has(sceneId)) {
+		return exScenePreviewCache.get(sceneId) || null;
+	}
+
+	try {
+		// Find which atlas contains this scene
+		const atlasIndex = await findExSceneAtlasIndex(sceneId);
+		if (atlasIndex === -1) {
+			console.warn(`Scene ${sceneId} not found in any Ex scenario atlas`);
+			return null;
+		}
+
+		// Fetch and parse the plist
+		const plistUrl = `${EX_SCENARIO_BASE_URL}/characterExScenario-${atlasIndex}.plist`;
+		const frames = await fetchAndParsePlist(plistUrl);
+
+		// Get the frame for this scene
+		const frameKey = `${sceneId}.png`;
+		if (!(frameKey in frames)) {
+			console.warn(`Frame ${frameKey} not found in plist`);
+			return null;
+		}
+
+		// Extract the sprite from the PNG
+		const pngUrl = `${EX_SCENARIO_BASE_URL}/characterExScenario-${atlasIndex}.png`;
+		const previewUrl = await extractSpriteFromAtlas(pngUrl, frames[frameKey]);
+
+		// Cache it
+		exScenePreviewCache.set(sceneId, previewUrl);
+		return previewUrl;
+	} catch (error) {
+		console.error(`Failed to fetch Ex scene preview for scene ${sceneId}:`, error);
+		return null;
+	}
+}
+
+/**
+ * Fetches preview URLs for multiple Ex scenes
+ */
+export async function fetchExScenePreviewBatch(sceneIds: number[]): Promise<{
+	[key: number]: string | null;
+}> {
+	const results: { [key: number]: string | null } = {};
+
+	for (const sceneId of sceneIds) {
+		results[sceneId] = await fetchExScenePreview(sceneId);
+	}
+
+	return results;
 }
