@@ -7,7 +7,8 @@ import {
 	getScenePreview,
 	storeScenePreview,
 	getScenePreviewBatch,
-	storeScenePreviewBatch
+	storeScenePreviewBatch,
+	getAllScenePreviews
 } from '../utils/indexedDB';
 
 const SCENES_DATA_URL =
@@ -233,11 +234,31 @@ export interface ExSceneInfo {
 /**
  * Fetches all Ex scene atlas data (plists and PNGs) and extracts all scene information
  * This is optimized to fetch each atlas once and extract all sprites from it
+ * On subsequent loads, returns cached data from IndexedDB without fetching
  */
 export async function fetchAllExScenes(
 	maxAtlasIndex: number = 9,
 	onProgress?: (current: number, total: number) => void
 ): Promise<ExSceneInfo[]> {
+	// Check if we have cached data first
+	const cachedPreviews = await getAllScenePreviews();
+	
+	if (cachedPreviews.length > 0) {
+		console.log(`Loaded ${cachedPreviews.length} scenes from cache`);
+		// Return cached data
+		return cachedPreviews.map(preview => {
+			const frameId = preview.sceneId;
+			const sceneId = frameId.slice(1, -2);
+			return {
+				frameId,
+				sceneId,
+				previewUrl: preview.previewDataUrl
+			};
+		});
+	}
+
+	// No cache, fetch and process all atlases
+	console.log('No cache found, fetching all atlases...');
 	const allScenes: ExSceneInfo[] = [];
 	const seenFrameIds = new Set<string>();
 	let processedAtlases = 0;

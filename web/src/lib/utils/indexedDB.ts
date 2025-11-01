@@ -168,3 +168,21 @@ export async function getAllScenePreviewIds(): Promise<string[]> {
 		request.onerror = () => reject(request.error);
 	});
 }
+
+/**
+ * Gets all stored scene previews
+ */
+export async function getAllScenePreviews(): Promise<Array<{ sceneId: string; previewDataUrl: string }>> {
+	const db = await openDB();
+	const transaction = db.transaction([SCENE_PREVIEWS_STORE], 'readonly');
+	const store = transaction.objectStore(SCENE_PREVIEWS_STORE);
+
+	return new Promise((resolve, reject) => {
+		const request = store.getAll();
+		request.onsuccess = () => {
+			const results = request.result as ScenePreview[];
+			resolve(results.map(r => ({ sceneId: r.sceneId, previewDataUrl: r.previewDataUrl })));
+		};
+		request.onerror = () => reject(request.error);
+	});
+}
