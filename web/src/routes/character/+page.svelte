@@ -167,9 +167,9 @@
 									</div>
 								{/if}
 
-								<!-- Scene Info -->
-								<div class="p-4">
-									<h3 class="font-semibold text-gray-900 line-clamp-2">{scene.title}</h3>
+							<!-- Scene Info -->
+							<div class="p-4">
+								<h3 class="font-semibold text-gray-900 line-clamp-2">{scene.title} <span class="text-xs text-gray-600">({scene.id})</span></h3>
 									<div class="mt-3 flex items-center justify-between">
 										<div>
 											{#if scene.isAdult}

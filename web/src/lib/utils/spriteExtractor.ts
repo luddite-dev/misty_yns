@@ -3,6 +3,7 @@ import type { SpriteFrame } from './plistParser';
 /**
  * Extracts a sprite from an atlas PNG based on frame data
  * Returns a data URL of the extracted sprite
+ * When textureRotated is true, the sprite is stored vertically in the atlas
  */
 export async function extractSpriteFromAtlas(
 	atlasImageUrl: string,
@@ -17,37 +18,53 @@ export async function extractSpriteFromAtlas(
 	const blob = await response.blob();
 	const bitmap = await createImageBitmap(blob);
 
+	const { textureRect, textureRotated, spriteOffset, spriteSize } = frame;
+
+	// When rotated, the canvas dimensions are swapped
+	const canvasWidth = textureRotated ? spriteSize.height : spriteSize.width;
+	const canvasHeight = textureRotated ? spriteSize.width : spriteSize.height;
+
 	// Create a canvas for the extracted sprite
-	const canvas = new OffscreenCanvas(frame.spriteSize.width, frame.spriteSize.height);
+	const canvas = new OffscreenCanvas(canvasWidth, canvasHeight);
 	const ctx = canvas.getContext('2d');
 
 	if (!ctx) {
 		throw new Error('Failed to get canvas context');
 	}
 
-	const { textureRect, textureRotated, spriteOffset } = frame;
-
 	// Save canvas state
 	ctx.save();
 
 	// Apply rotation if needed
 	if (textureRotated) {
-		// Rotate 90 degrees clockwise and translate to correct position
-		ctx.translate(frame.spriteSize.width, 0);
-		ctx.rotate((Math.PI / 180) * 90);
+		// Debug log only for rotated sprites
+		console.log(`[SpriteExtractor] ROTATED Sprite - extracting:`, {
+			textureRotated,
+			spriteSize,
+			textureRect,
+			spriteOffset,
+			canvasWidth,
+			canvasHeight,
+			translation: `(0, ${spriteSize.width})`,
+			rotation: `-90°`
+		});
+		
+		// For rotated sprites: translate and rotate 90 degrees counter-clockwise
+		ctx.translate(0, spriteSize.width);
+		ctx.rotate((-Math.PI / 180) * 90);
 	}
 
 	// Draw the sprite from the atlas
 	ctx.drawImage(
 		bitmap,
-		textureRect.x, // source x
-		textureRect.y, // source y
-		textureRect.width, // source width
-		textureRect.height, // source height
+		textureRect.x, // source x in atlas
+		textureRect.y, // source y in atlas
+		textureRect.width, // source width (original texture dimensions)
+		textureRect.height, // source height (original texture dimensions)
 		spriteOffset.x, // destination x
 		spriteOffset.y, // destination y
-		textureRect.width, // destination width (before rotation adjustment)
-		textureRect.height // destination height (before rotation adjustment)
+		textureRect.width, // destination width
+		textureRect.height // destination height
 	);
 
 	// Restore canvas state

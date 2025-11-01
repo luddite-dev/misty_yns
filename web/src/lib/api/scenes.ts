@@ -82,6 +82,7 @@ export async function fetchScenes(): Promise<Scene[]> {
 /**
  * Gets all scenes for a character by following the scene chain
  * Starts from character's MCharacterScenes and follows NextMSceneId
+ * For continuation scenes (Title = "その後――"), reuses the previous scene's title
  */
 export function getCharacterScenes(
 	character: Character,
@@ -89,12 +90,14 @@ export function getCharacterScenes(
 ): CharacterScene[] {
 	const sceneMap = new Map(allScenes.map((scene) => [scene.Id, scene]));
 	const result: CharacterScene[] = [];
+	const CONTINUATION_MARKER = 'その後――';
 
 	// Get all the scene IDs from character's MCharacterScenes
 	for (const characterScene of character.MCharacterScenes) {
 		const sceneId = characterScene.MSceneId;
 		const visited = new Set<number>();
 		let currentSceneId: number | null = sceneId;
+		let previousTitle = '';
 
 		// Follow the chain of NextMSceneId
 		while (currentSceneId !== null && currentSceneId !== undefined) {
@@ -109,9 +112,13 @@ export function getCharacterScenes(
 				break;
 			}
 
+			// Use previous title for continuation scenes
+			const displayTitle = scene.Title === CONTINUATION_MARKER ? previousTitle : scene.Title;
+			previousTitle = displayTitle;
+
 			result.push({
 				id: scene.Id,
-				title: scene.Title,
+				title: displayTitle,
 				kizunaRank: characterScene.KizunaRank,
 				isAdult: scene.IsAdult
 			});
@@ -133,7 +140,7 @@ const exScenePreviewCache = new Map<number, string>();
  * Returns the atlas index, or -1 if not found
  */
 async function findExSceneAtlasIndex(sceneId: number, maxAtlas: number = 10): Promise<number> {
-	for (let i = 0; i < maxAtlas; i++) {
+	for (let i = 1; i < maxAtlas; i++) {
 		try {
 			const plistUrl = `${EX_SCENARIO_BASE_URL}/characterExScenario-${i}.plist`;
 			const frames = await fetchAndParsePlist(plistUrl);

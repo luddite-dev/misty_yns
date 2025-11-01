@@ -120,20 +120,38 @@ export async function parsePlist(plistContent: string): Promise<PlistFrames> {
 		}
 
 		// Get textureRotated boolean value
+		// If frameDict.true exists (is not undefined), then textureRotated = true
+		// If frameDict.false exists, then textureRotated = false
 		let textureRotated = false;
-		if (frameDict.false !== undefined && frameDict.false !== '') {
-			textureRotated = false;
-		} else if (frameDict.true !== undefined && frameDict.true !== '') {
+		if (frameDict.true !== undefined) {
 			textureRotated = true;
+		} else if (frameDict.false !== undefined) {
+			textureRotated = false;
 		}
 
-		frames[frameName] = {
+		const parsedFrame = {
 			spriteOffset: parseCoordinate(valueMap['spriteOffset'] || '{0,0}'),
 			spriteSize: parseSize(valueMap['spriteSize'] || '{0,0}'),
 			spriteSourceSize: parseSize(valueMap['spriteSourceSize'] || '{0,0}'),
 			textureRect: parseTextureRect(valueMap['textureRect'] || '{{0,0},{0,0}}'),
 			textureRotated
 		};
+		
+		// Debug log only rotated frames
+		if (textureRotated) {
+			console.log(`[PlistParser] ROTATED Frame ${frameName}:`, {
+				raw: {
+					spriteOffsetStr: valueMap['spriteOffset'],
+					spriteSizeStr: valueMap['spriteSize'],
+					spriteSourceSizeStr: valueMap['spriteSourceSize'],
+					textureRectStr: valueMap['textureRect'],
+					textureRotated
+				},
+				parsed: parsedFrame
+			});
+		}
+		
+		frames[frameName] = parsedFrame;
 	}
 
 	return frames;
